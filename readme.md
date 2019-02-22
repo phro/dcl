@@ -31,3 +31,10 @@ Participants: Jesse Frohlich and Andrew Wilson
   - Ruby (OOL)
   - Go
 
+## Plan
+- Talk to Matilde about the project
+- Look into common algorithms for building parse trees
+  - [SWI-Prolog parser](https://jan-lope.github.io/Toki_Pona-Parser/)
+  - [C# parser](https://github.com/matthewdeanmartin/tokipona.parser/tree/master/TokiPonaTools)
+- Learn some Haskell
+- Learn some toki pona
