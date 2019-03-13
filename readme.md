@@ -36,5 +36,7 @@ Participants: Jesse Frohlich and Andrew Wilson
 - Look into common algorithms for building parse trees
   - [SWI-Prolog parser](https://jan-lope.github.io/Toki_Pona-Parser/)
   - [C# parser](https://github.com/matthewdeanmartin/tokipona.parser/tree/master/TokiPonaTools)
+- Read some papers
+  - [University of Hawaii](https://www2.hawaii.edu/~chin/661F12/Projects/ztomaszewski.pdf)
 - Learn some Haskell
 - Learn some toki pona
