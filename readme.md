@@ -40,3 +40,14 @@ Participants: Jesse Frohlich and Andrew Wilson
   - [University of Hawaii](https://www2.hawaii.edu/~chin/661F12/Projects/ztomaszewski.pdf)
 - Learn some Haskell
 - Learn some toki pona
+- Learn some linguistics
+  - Is Chompsky normal form computationally desirable?
+    - "AdvP la Clause" vs "Clause la AdvP"
+
+## Sources
+- [Dictionary](http://tokipona.net/tp/janpije/dictionary.php)
+
+Goals for 2019-03-21
+- Finish the lexer
+  - tpLex :: String -> [Lexeme]
+- Discuss the CFG
