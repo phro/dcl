@@ -8,12 +8,12 @@ License: GPL3
 
 A rough classification of words in Toki Pona
 
-< data Lexeme = Content String     -- Noun, verb, modifier
-<             | Borrow String      -- (always modifiers)
-<             | Preposition String -- e, tawa, kepeken, lon, li?, poka, &c.
-<             | Seperator String   -- ",":".":"pi":[]
-<             | Nonsense String    -- to collect errors
-<             deriving (Show)
+> data Lexeme = Content String     -- Noun, verb, modifier
+>             | Borrow String      -- (always modifiers)
+>             | Preposition String -- e, tawa, kepeken, lon, poka, &c.
+>             | Seperator String   -- ",":".":"pi":[]:li
+>             | Nonsense String    -- to collect errors
+>             deriving (Show)
 
 
 Lexer based on the lex function. This splits the string into words and
@@ -42,7 +42,8 @@ lexer':
 > lexer' :: String -> [String]
 > lexer' = join . (map trimSeperator) . (cutAt ' ')
 
-Context Free Grammar sturcture. Should contain nonterminals, terminals, production rules, and a start symbol.
+Context Free Grammar sturcture. Should contain nonterminals, terminals,
+production rules, and a start symbol.
 
 > data Tree node leaf = Node node (Tree node leaf) (Tree node leaf)
 >                     | Leaf leaf
@@ -50,37 +51,53 @@ Context Free Grammar sturcture. Should contain nonterminals, terminals, producti
 >
 >{- > data Terminal =  -}
 
-> data Nonterminal = ContentPhrase
->                  | Content                -- a single word
->                  | Predicate
->                  | Preposition
->                  | VerbPhrase
->                  | PrepositionalCluster
->                  | Terminal String
->               -- | Missing: taso as a particle, la as a context delimiter
+< data Nonterminal = ContentPhrase
+<                  | Content                -- a single word
+<                  | SubjectPhrase
+<                  | Predicate
+<                  | Preposition
+<                  | VerbPhrase
+<                  | PrepositionalCluster
+<                  deriving (Show)
+<               -- | Terminal String
+<               -- | Missing: taso as a particle, la as a context delimiter
+< data Terminal = Terminal String deriving (Show)
                
 Production rules:
 
-< Start -> [Terminal "mi", Predicate]
-<       | [Terminal "sina", Predicate]
-<       | [Content, Terminal "li", Predicate]
-< 
-< ContentPhrase -> Content
-<               | [Content, ContentPhrase]
-<               | [ContentPhrase, Termial "pi", ContentPhrase]
-< 
+> data ProductionRule = Nonterminal String [(ProductionRule,ProductionRule)]
+>                     | Terminal Lexeme
+>                     deriving (Show)
+  
 < etc.
 
 < data CFG = 
 
+< parse :: ProductionRule -> [Lexeme] -> [[Bool]]
+< parse r s = all@(p:ps)
+<   where
+<     -- a list replacing each Lexeme with (the existence of) a terminal
+<     -- production rule
+<     p = 
 
 Playground:
 
-> a :: Main.Lexeme
-> a = Seperator ","
->
+< a :: Main.Lexeme
+< a = Seperator ","
+
 > s = "mi wile e ni: mi kama sona e jan pi lon ni."
 > p = lexer s
+>
+
+> Nonterminal "start" [(Content "mi", Predicate)
+>                   ,(Content "sina", Predicate)
+>                   ,(SubjectPhrase, Predicate)
+>                   ]
+> Nonterminal "subjectPhrase" [(ContentPhrase, Seperator "li")]
+
+< ContentPhrase -> Content
+<               | [Content, ContentPhrase]
+<               | [ContentPhrase, Termial "pi", ContentPhrase]
 
 Playtesting a tree
 
