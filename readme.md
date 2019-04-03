@@ -20,7 +20,7 @@ Participants: Jesse Frohlich and Andrew Wilson
     puns (as opposed to morphological puns).
 
 - \*Density questions.
-  - Can you distinguish poetry from prose from nonesense by analyzing
+  - Can you distinguish poetry from prose from nonsense by analyzing
     compressibility of a passage of text?
 
 ## Languages ##
@@ -43,10 +43,20 @@ Participants: Jesse Frohlich and Andrew Wilson
 - Learn some linguistics
   - Is Chompsky normal form computationally desirable?
     - "AdvP la Clause" vs "Clause la AdvP"
+    -
+
+## TODO
+- en
+- anu
+- seme
+- la
+- mu
+- o
 
 ## Sources
 - [Dictionary](http://tokipona.net/tp/janpije/dictionary.php)
-
+- [Non CNF CYK algorithm](
+https://www.informaticadidactica.de/uploads/Artikel/LangeLeiss2009/LangeLeiss2009.pdf)
 Goals for 2019-03-21
 - Finish the lexer
   - tpLex :: String -> [Lexeme]
