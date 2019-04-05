@@ -4,7 +4,9 @@ License: GPL3
 
 > import Data.List.Split
 > import Data.Char
+> import Data.Maybe
 > import Control.Monad
+> import Data.List
 
 A rough classification of words in Toki Pona
 
@@ -341,23 +343,47 @@ Content Words
 
 > type Grammar = [ProductionRule]
 
+
 Given a symbol or a pair of symbols (this should eventually become a *list* of
 symbols in for non-CNF grammars), determine whether the given production rule
 can produce the symbol(s).
 
-> checkRule :: ProductionRule -> Either (Symbol,Symbol) Symbol -> Bool
-> checkRule (ProductionRule _ s) t = s == t
+> checkRule :: Either (Symbol,Symbol) Symbol -> ProductionRule -> Maybe Symbol
+> checkRule s (ProductionRule n t)  = if s == t then Just n else Nothing
 
-< checkRule (ProductionRule _ (Right (Terminal s))) (Right (Terminal t)) = s == t
-< checkRule (ProductionRule _ (Left (a,b))) (Left (a',b')) = (a==a')&&(b==b')
-< checkRule 
 
-< parse :: Grammar -> [Symbol] -> [[[Symbol]]] -- "Array" of lists
-< parse g s = all@(p:ps)
-<   where
-<     -- a list replacing each Lexeme with (the existence of) a terminal
-<     -- production rule
-<     p = map checkRule
+Given a grammar, send a symbol to all symbols which connect to it via a
+production rule. This is relevant for the terminal production rules.
+
+> zerothparse :: Grammar -> Symbol -> [Symbol]
+> zerothparse g s = mapMaybe (checkRule $ Right s) g
+
+> firstparse :: Grammar -> [Symbol] -> [[Symbol]] -- List of lists
+> firstparse g = map $ zerothparse g
+
+
+Given a grammar and list of symbols produced from the lexer, produce the
+triangular array of the CYK algorithm.
+
+> secondparse :: Grammar -> (Symbol,Symbol) -> [Symbol]
+> secondparse g s = mapMaybe (checkRule $ Left s) g
+
+> nextLevel :: Grammar -> [[[Symbol]]] -> [[Symbol]]
+> nextLevel g t = l : nextLevel g (map tail t)
+>   where
+>     l = concat . concat $
+>       map (\i->(map $ secondparse g) $
+>         zipWith ((,)) (t !! i !! 0) (t !! (n-i) !! (1+i))) [0..n]
+>     n = length t -1
+
+
+This parser compiles correctly, but does not work properly.
+
+> parse :: Grammar -> [Symbol] -> [[[Symbol]]] -- "Array" of lists
+> parse g ss = p:ps
+>   where
+>     p  = firstparse g ss
+>     ps = map (nextLevel g . (p:)) $ inits ps
 
 Playground:
 
