@@ -368,13 +368,17 @@ triangular array of the CYK algorithm.
 > secondparse :: Grammar -> (Symbol,Symbol) -> [Symbol]
 > secondparse g s = mapMaybe (checkRule $ Left s) g
 
+> getPairs :: [a] -> [a] -> [(a,a)]
+> getPairs u v = [(x,y) | x<-u, y<-v]
+
 > nextLevel :: Grammar -> [[[Symbol]]] -> [[Symbol]]
+> nextLevel g [] = [] -- FIXME
 > nextLevel g t = l : nextLevel g (map tail t)
 >   where
 >     l = concat . concat $
 >       map (\i->(map $ secondparse g) $
->         zipWith ((,)) (t !! i !! 0) (t !! (n-i) !! (1+i))) [0..n]
->     n = length t -1
+>         getPairs (t !! i !! 0) (t !! (n-i-1) !! (1+i))) [0..n-1]
+>     n = length (t !! 0) -length t
 
 
 This parser compiles correctly, but does not work properly.
@@ -387,12 +391,20 @@ This parser compiles correctly, but does not work properly.
 
 Playground:
 
+> s = "mi moku"
+> p = lexer s
+> -- n = firstparse grammar p
+> n = [[SubjectPhrase],[Predicate]]
+> n' = nextLevel grammar [n]
+>
+> x = zipWith ((,)) [1,2] [3,4]
+> y = [(x,y) | x<-[1,2], y<-[3,4]]
+
 < a :: Main.Lexeme
 < a = Seperator ","
 
-> s = "mi wile e ni: mi kama sona e jan pi lon ni."
-> p = lexer s
->
+< s = "mi wile e ni: mi kama sona e jan pi lon ni."
+< p = lexer s
 
 < Nonterminal "start" [(Content "mi", Predicate)
 <                   ,(Content "sina", Predicate)
