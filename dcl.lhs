@@ -372,16 +372,17 @@ triangular array of the CYK algorithm.
 > getPairs u v = [(x,y) | x<-u, y<-v]
 
 > nextLevel :: Grammar -> [[[Symbol]]] -> [[Symbol]]
-> nextLevel g [] = [] -- FIXME
-> nextLevel g t = l : nextLevel g (map tail t)
->   where
->     l = concat . concat $
->       map (\i->(map $ secondparse g) $
->         getPairs (t !! i !! 0) (t !! (n-i-1) !! (1+i))) [0..n-1]
->     n = length (t !! 0) -length t
+> nextLevel g t =
+>   if last t == []
+>      then []
+>      else
+>       l : nextLevel g (map tail t)
+>         where
+>           l = concat . concat $
+>             map (\i->(map $ secondparse g) $
+>               getPairs (t !! i !! 0) (t !! (n-1-i) !! (1+i))) [0..(length t-1)]
+>           n = length (t !! 0) -length t
 
-
-This parser compiles correctly, but does not work properly.
 
 > parse :: Grammar -> [Symbol] -> [[[Symbol]]] -- "Array" of lists
 > parse g ss = p:ps
@@ -391,7 +392,7 @@ This parser compiles correctly, but does not work properly.
 
 Playground:
 
-> s = "mi moku"
+> s = "mi wile moku"
 > p = lexer s
 > -- n = firstparse grammar p
 > n = [[SubjectPhrase],[Predicate]]
