@@ -8,6 +8,7 @@ License: GPL3
 > import Control.Monad
 > import Data.List
 
+
 A rough classification of words in Toki Pona
 
 < data Lexeme = Content String     -- Noun, verb, modifier
@@ -46,10 +47,17 @@ lexer':
 Context Free Grammar sturcture. Should contain nonterminals, terminals,
 production rules, and a start symbol.
 
-> data Tree node leaf = Node node (Tree node leaf) (Tree node leaf)
->                     | Leaf leaf
->                     deriving (Eq,Show)
->
+< data Tree node leaf = Node node (Tree node leaf) (Tree node leaf)
+<                     | Leaf leaf
+<                     deriving (Eq,Show) -- Write custom show later
+
+ data Tree a = Leaf a
+             | Limb a (Tree a)
+             | Node a (Tree a) (Tree a)
+
+> data SyntaxTree = Tree Symbol Symbol
+
+
 >{- > data Terminal =  -}
 
 > data Symbol = Start
@@ -60,7 +68,7 @@ production rules, and a start symbol.
 >             | PrepositionPhrase
 >             | PrepositionCluster
 >          -- | VerbPhrase
->             | Li -- Only produces: Terminal "li" 
+>             | Li -- Only produces: Terminal "li"
 >             | PiPhrase
 >             | Pi
 >             | Terminal String
@@ -86,7 +94,7 @@ Playground
 >   ,ProductionRule SubjectPhrase $ Right (Terminal "sina")
 >   ,ProductionRule SubjectPhrase $ Left (Content,Li)
 >   ,ProductionRule Li $ Right (Terminal "li")
-> 
+>
 
 Content -> Content "pi" Content
 
@@ -101,13 +109,13 @@ Content -> Content "pi" Content
 >   (PrepositionPhrase,PrepositionCluster)
 >   ,ProductionRule PrepositionCluster $ Left
 >   (PrepositionPhrase,PrepositionCluster)
- 
+
 PrepositionCluster -> PrepositionPhrase
 
 >   ,ProductionRule PrepositionCluster $ Left (Preposition,Content)
 >   ,ProductionRule PrepositionPhrase $ Left (Preposition,Content)
 
-Prepositions 
+Prepositions
 
 >   ,ProductionRule Preposition $ Right (Terminal "e")
 >   ,ProductionRule Preposition $ Right (Terminal "kepeken")
@@ -348,18 +356,26 @@ Given a symbol or a pair of symbols (this should eventually become a *list* of
 symbols in for non-CNF grammars), determine whether the given production rule
 can produce the symbol(s).
 
-> checkRule :: Either (Symbol,Symbol) Symbol -> ProductionRule -> Maybe Symbol
-> checkRule s (ProductionRule n t)  = if s == t then Just n else Nothing
+> checkRuleSymbol::Either (Symbol,Symbol) Symbol -> ProductionRule -> Maybe Symbol
+> checkRuleSymbol s (ProductionRule n t)  = if s == t then Just n else Nothing
 
+> checkRuleTree::Either(Symbol,Symbol)Symbol->ProductionRule -> Maybe SyntaxTree
+> checkRuleTree s (ProductionRule n t) = if s == t then (Limb n s) else Nothing
 
 Given a grammar, send a symbol to all symbols which connect to it via a
 production rule. This is relevant for the terminal production rules.
 
-> zerothparse :: Grammar -> Symbol -> [Symbol]
-> zerothparse g s = mapMaybe (checkRule $ Right s) g
+< zerothparse :: Grammar -> Symbol -> [Symbol]
+< zerothparse g s = mapMaybe (checkRule $ Right s) g
 
-> firstparse :: Grammar -> [Symbol] -> [[Symbol]] -- List of lists
-> firstparse g = map $ zerothparse g
+> zerothparse :: Grammar -> (Symbol -> Maybe a) -> Symbol -> [a]
+> zerothparse g f s = mapMaybe (f $ Right s) g
+
+< firstparse :: Grammar -> [Symbol] -> [[Symbol]] -- List of lists
+< firstparse g = map $ zerothparse g
+
+> firstparse :: Grammar -> (Symbol -> Maybe a) -> [Symbol] -> [[a]] -- List of lists
+> firstparse g f = map $ zerothparse g f
 
 
 Given a grammar and list of symbols produced from the lexer, produce the
@@ -400,28 +416,6 @@ Playground:
 > -- n = firstparse grammar p
 > n = [[SubjectPhrase],[Predicate]]
 > n' = nextLevel grammar [n]
->
-> x = zipWith ((,)) [1,2] [3,4]
-> y = [(x,y) | x<-[1,2], y<-[3,4]]
-
-< a :: Main.Lexeme
-< a = Seperator ","
 
 < s = "mi wile e ni: mi kama sona e jan pi lon ni."
 < p = lexer s
-
-< Nonterminal "start" [(Content "mi", Predicate)
-<                   ,(Content "sina", Predicate)
-<                   ,(SubjectPhrase, Predicate)
-<                   ]
-< Nonterminal "subjectPhrase" [(Content, Seperator "li")]
-
-< Content -> Content
-<               | [Content, Content]
-<               | [Content, Termial "pi", Content]
-
-Playtesting a tree
-
-> t :: Tree Int Bool
-> t = Node 3 (Node 5 (Leaf True) (Leaf False)) (Leaf False)
-
