@@ -373,22 +373,25 @@ triangular array of the CYK algorithm.
 
 > nextLevel :: Grammar -> [[[Symbol]]] -> [[Symbol]]
 > nextLevel g t =
->   if last t == []
+>   if length (last t) == 1
 >      then []
 >      else
 >       l : nextLevel g (map tail t)
 >         where
 >           l = concat . concat $
 >             map (\i->(map $ secondparse g) $
->               getPairs (t !! i !! 0) (t !! (n-1-i) !! (1+i))) [0..(length t-1)]
->           n = length (t !! 0) -length t
+>               getPairs (t !! i !! 0) (t !! (n-i) !! (1+i))) [0..n]
+>           n = length t - 1
 
 
 > parse :: Grammar -> [Symbol] -> [[[Symbol]]] -- "Array" of lists
 > parse g ss = p:ps
 >   where
 >     p  = firstparse g ss
->     ps = map (nextLevel g . (p:)) $ inits ps
+>     ps = take (length ss -1) $ map (nextLevel g . (p:)) $ inits ps
+
+> isGrammatical :: Grammar -> [Symbol] -> Bool
+> isGrammatical g = (Start `elem`) . head . last . parse g
 
 Playground:
 
