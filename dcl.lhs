@@ -11,7 +11,8 @@ License: GPL3
 > import Data.Tree as T
 > import System.Environment
 
-A rough classification of words in Toki Pona
+
+A rough classification of words in Toki Pona;
 
 < data Lexeme = Content String     -- Noun, verb, modifier
 <             | Borrow String      -- (always modifiers)
@@ -489,9 +490,7 @@ Playground:
 
 > main = do
 >   x:xs <- getArgs
->   putStrLn $ maybe "No parse tree" drawSyntaxTree $ maybeHead $ getSyntaxTree x
->     where
->       maybeHead (a:_) = Just a; maybeHead [] = Nothing
+>   putStrLn $ unlines $ map drawSyntaxTree $ getSyntaxTree x
 
 > s = "mi wile moku"
 > p = lexerSymbol s
