@@ -1,0 +1,62 @@
+\documentclass[10.5pt]{article}
+\usepackage{amsmath, fancyhdr}
+\usepackage{amssymb, amsthm}
+\usepackage{bbm}
+\usepackage[mathscr]{euscript}
+%%%
+% Set up the margins to use a fairly large area of the page
+%%%
+\oddsidemargin=.2in
+\evensidemargin=.2in
+\textwidth=6in
+\topmargin=0in
+\textheight=9.0in
+\parskip=.07in
+\parindent=0in
+
+%%%
+% Set up the header
+%%%
+\newcommand{\setheader}[5]{
+    \lhead{{ #1}\\{ #2}}
+    \rhead{{ #3}\\{ #4}}
+    \bigskip
+    \center{{\bf #5}}\\
+    \medskip
+    %\today
+}
+
+\begin{document}
+\thispagestyle{fancy}
+\setheader{Mathematical and Computational Linguistics}{Dr.  Marcolli}
+{University of Toronto}{Jesse Frohlich and Andrew Wilson}{Toki Taster}
+\medskip
+
+\begin{quote}
+Toki Pona is a human constructed language created by Sonja Lang in $2010$. 
+It was an attempt to simplify ideas to their most basic elements. For example,
+what is a professor but a `person of knowledge'? And if you're hungry, then
+you `want eat'. In Sonja's words,
+\begin{quote}
+``If English is a thick novel, then Toki Pona is haiku.''
+\end{quote}
+
+Enough with the introduction though, let's build some sentences using the sentence
+formula ` Noun + li + Noun'. For example, `lipu li ijo' translates to ` a 
+book is something'.
+
+
+\begin{tabular}{c c c c}
+{\bf Nouns}  &                          & {\bf Adjectives} &  \\
+\emph{ijo}   & something, thing, being      \\ 
+\emph{jan}   & person, human                \\ 
+\emph{kili}  & fruit, vegetable             \\ 
+\emph{nanpa} & number                              \\ 
+\emph{lipu}  & document, book                   \\
+\emph{telo}  & water                      \\
+\emph{sona}  & knowledge                  \\
+\emph{toki}  & language                     \\
+\end{tabular}
+
+\end{quote}
+\end{document}
