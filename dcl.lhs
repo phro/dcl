@@ -7,6 +7,8 @@ License: GPL3
 > import Data.Maybe
 > import Control.Monad
 > import Data.List
+> import Data.Tree as T
+> import System.Environment
 
 
 A rough classification of words in Toki Pona
@@ -23,10 +25,13 @@ punctuation, each as their own string. Note that lex is designed to parse
 haskell source code; the fact that it works for us is luck, and if something
 goes wrong, it may not be a bad idea to switch to lexer' below.
 
-> lexer :: String -> [Symbol]
-> lexer [] = []
-> lexer s  = Terminal n : lexer s'
+> lexerSymbol :: String -> [Symbol]
+> lexerSymbol [] = []
+> lexerSymbol s  = Terminal n : lexerSymbol s'
 >   where [(n,s')] = lex s
+
+> lexerTree :: String -> [SyntaxTree]
+> lexerTree = map Spoon . lexerSymbol
 
 
 Before discovering the lex function in Data.Char, we developed the function
@@ -47,16 +52,42 @@ lexer':
 Context Free Grammar sturcture. Should contain nonterminals, terminals,
 production rules, and a start symbol.
 
-< data Tree node leaf = Node node (Tree node leaf) (Tree node leaf)
-<                     | Leaf leaf
+< data Tree node leaf = Fork node (Tree node leaf) (Tree node leaf)
+<                     | Spoon leaf
 <                     deriving (Eq,Show) -- Write custom show later
 
- data Tree a = Leaf a
-             | Limb a (Tree a)
-             | Node a (Tree a) (Tree a)
+Tree data structure
 
-> data SyntaxTree = Tree Symbol Symbol
+> data SubBinaryTree a = Spoon a
+>                      | Knife a (SubBinaryTree a)
+>                      | Fork  a (SubBinaryTree a) (SubBinaryTree a)
+>                      deriving (Show)
 
+>{-TODO: Implement Data.Tree's drawTree-}
+
+> getHead :: SubBinaryTree a -> a
+> getHead (Spoon x) = x
+> getHead (Knife x _) = x
+> getHead (Fork x _ _) = x
+
+> type SyntaxTree = SubBinaryTree Symbol
+> isStart :: SyntaxTree -> Bool
+> isStart (Fork Start _ _) = True
+> isStart _ = False
+
+In Data.Tree, there exists an algorithm to draw a tree. For the sake of time, instead of using their tree data structure, what follows is a conversion from SubBinaryTree to T.Tree:
+
+> fromSubBinaryTree :: SubBinaryTree Symbol -> T.Tree Symbol
+> fromSubBinaryTree (Spoon x)       = Node x []
+> fromSubBinaryTree (Knife x t)     = Node x [fromSubBinaryTree t]
+> fromSubBinaryTree (Fork  x t1 (Fork PiPhrase t2 t3))
+>   = Node x [fromSubBinaryTree t1
+>            ,fromSubBinaryTree t2
+>            ,fromSubBinaryTree t3
+>            ]
+> fromSubBinaryTree (Fork  x t1 t2) = Node x [fromSubBinaryTree t1
+>                                            ,fromSubBinaryTree t2
+>                                            ]
 
 >{- > data Terminal =  -}
 
@@ -69,12 +100,25 @@ production rules, and a start symbol.
 >             | PrepositionCluster
 >          -- | VerbPhrase
 >             | Li -- Only produces: Terminal "li"
->             | PiPhrase
->             | Pi
+>             | Pi -- Only produces: Terminal "pi"
+>             | PiPhrase -- Only produces: (
 >             | Terminal String
->             deriving (Show,Eq)
+>             deriving (Eq)
 >          -- | Terminal String
 >          -- | Missing: taso as a particle, la as a context delimiter
+
+> instance Show Symbol where
+>   show Start               = "Start"
+>   show Content             = "Content" 
+>   show SubjectPhrase       = "Subject Phrase"
+>   show Predicate           = "Predicate"
+>   show Preposition         = "Preposition"
+>   show PrepositionPhrase   = "Preposition Phrase"
+>   show PrepositionCluster  = "Preposition Cluster"
+>   show Li                  = "li" -- Only produces: Terminal "li"
+>   show Pi                  = "pi" -- Only produces: Terminal "pi"
+>   show PiPhrase            = "pi Phrase" -- Only produces: (
+>   show (Terminal s)        = s
 
 < data Terminal = Terminal String deriving (Show,Eq)
 
@@ -94,7 +138,7 @@ Playground
 >   ,ProductionRule SubjectPhrase $ Right (Terminal "sina")
 >   ,ProductionRule SubjectPhrase $ Left (Content,Li)
 >   ,ProductionRule Li $ Right (Terminal "li")
->
+>   ,ProductionRule Pi $ Right (Terminal "pi")
 
 Content -> Content "pi" Content
 
@@ -359,8 +403,20 @@ can produce the symbol(s).
 > checkRuleSymbol::Either (Symbol,Symbol) Symbol -> ProductionRule -> Maybe Symbol
 > checkRuleSymbol s (ProductionRule n t)  = if s == t then Just n else Nothing
 
-> checkRuleTree::Either(Symbol,Symbol)Symbol->ProductionRule -> Maybe SyntaxTree
-> checkRuleTree s (ProductionRule n t) = if s == t then (Limb n s) else Nothing
+> checkRuleTree::Either(SyntaxTree,SyntaxTree)SyntaxTree->ProductionRule -> Maybe SyntaxTree
+> checkRuleTree (Left (x,y)) (ProductionRule s (Left (u,v))) = 
+>   if getHead x == u && getHead y == v
+>      then
+>        Just $ Fork s x y
+>      else 
+>        Nothing
+> checkRuleTree (Right x) (ProductionRule s (Right u)) = 
+>   if getHead x == u
+>      then
+>        Just $ Knife s x
+>      else
+>        Nothing
+> checkRuleTree _ _ = Nothing
 
 Given a grammar, send a symbol to all symbols which connect to it via a
 production rule. This is relevant for the terminal production rules.
@@ -368,54 +424,84 @@ production rule. This is relevant for the terminal production rules.
 < zerothparse :: Grammar -> Symbol -> [Symbol]
 < zerothparse g s = mapMaybe (checkRule $ Right s) g
 
-> zerothparse :: Grammar -> (Symbol -> Maybe a) -> Symbol -> [a]
+> zerothparse :: Grammar -> (Either (a,a) a -> ProductionRule -> Maybe a)
+>             -> a -> [a]
 > zerothparse g f s = mapMaybe (f $ Right s) g
 
 < firstparse :: Grammar -> [Symbol] -> [[Symbol]] -- List of lists
 < firstparse g = map $ zerothparse g
 
-> firstparse :: Grammar -> (Symbol -> Maybe a) -> [Symbol] -> [[a]] -- List of lists
+
+Given a symbol, produce a list of lists
+
+> firstparse :: Grammar -> (Either (a,a) a -> ProductionRule -> Maybe a)
+>            -> [a] -> [[a]] 
 > firstparse g f = map $ zerothparse g f
 
 
 Given a grammar and list of symbols produced from the lexer, produce the
 triangular array of the CYK algorithm.
 
-> secondparse :: Grammar -> (Symbol,Symbol) -> [Symbol]
-> secondparse g s = mapMaybe (checkRule $ Left s) g
+> secondparse :: Grammar -> (Either (a,a) a-> ProductionRule -> Maybe a)
+>             -> (a,a) -> [a]
+> secondparse g f s = mapMaybe (f $ Left s) g
 
 > getPairs :: [a] -> [a] -> [(a,a)]
 > getPairs u v = [(x,y) | x<-u, y<-v]
 
-> nextLevel :: Grammar -> [[[Symbol]]] -> [[Symbol]]
-> nextLevel g t =
+> nextLevel :: Grammar -> (Either (a,a) a -> ProductionRule -> Maybe a)
+>           -> [[[a]]] -> [[a]]
+> nextLevel g f t =
 >   if length (last t) == 1
 >      then []
 >      else
->       l : nextLevel g (map tail t)
+>       l : nextLevel g f (map tail t)
 >         where
 >           l = concat . concat $
->             map (\i->(map $ secondparse g) $
+>             map (\i->(map $ secondparse g f) $
 >               getPairs (t !! i !! 0) (t !! (n-i) !! (1+i))) [0..n]
 >           n = length t - 1
 
 
-> parse :: Grammar -> [Symbol] -> [[[Symbol]]] -- "Array" of lists
-> parse g ss = p:ps
+> parse :: Grammar -> (Either (a,a) a -> ProductionRule -> Maybe a)
+>       -> [a] -> [[[a]]] -- "Array" of lists
+> parse g f ss = p:ps
 >   where
->     p  = firstparse g ss
->     ps = take (length ss -1) $ map (nextLevel g . (p:)) $ inits ps
+>     p  = firstparse g f ss
+>     ps = take (length ss -1) $ map (nextLevel g f . (p:)) $ inits ps
 
 > isGrammatical :: Grammar -> [Symbol] -> Bool
-> isGrammatical g = (Start `elem`) . head . last . parse g
+> isGrammatical g = (Start `elem`) . head . last . parse g checkRuleSymbol
 
 Playground:
 
+> getSyntaxTree :: String -> [SyntaxTree]
+> getSyntaxTree s = filter isStart $ head $ last $
+>   parse grammar checkRuleTree $ lexerTree s
+
+> drawSyntaxTree :: SyntaxTree -> String
+> drawSyntaxTree t = map repl $ T.drawTree $ fmap show (fromSubBinaryTree t)
+>   where repl '|' = '│'
+>         repl '+' = '├'
+>         repl '`' = '└'
+>         repl '-' = '─'
+>         repl c   = c
+
+> main = do
+>   x:xs <- getArgs
+>   putStrLn $ maybe "No parse tree" drawSyntaxTree $ maybeHead $ getSyntaxTree x
+>     where
+>       maybeHead (a:_) = Just a; maybeHead [] = Nothing
+
 > s = "mi wile moku"
-> p = lexer s
-> -- n = firstparse grammar p
-> n = [[SubjectPhrase],[Predicate]]
-> n' = nextLevel grammar [n]
+> p = lexerSymbol s
+> p' = lexerTree s
+> o = parse grammar checkRuleSymbol p
+> o' = parse grammar checkRuleTree p'
+
+< -- n = firstparse grammar p
+< n = [[SubjectPhrase],[Predicate]]
+< m = nextLevel grammar checkRuleSymbol [n]
 
 < s = "mi wile e ni: mi kama sona e jan pi lon ni."
 < p = lexer s
