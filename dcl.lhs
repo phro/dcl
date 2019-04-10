@@ -2,14 +2,14 @@
 Authors: Jesse Frohlich & Andrew Wilson
 License: GPL3
 
-> import Data.List.Split
+< import Data.List.Split
+
 > import Data.Char
 > import Data.Maybe
 > import Control.Monad
 > import Data.List
 > import Data.Tree as T
 > import System.Environment
-
 
 A rough classification of words in Toki Pona
 
@@ -37,17 +37,17 @@ goes wrong, it may not be a bad idea to switch to lexer' below.
 Before discovering the lex function in Data.Char, we developed the function
 lexer':
 
-> cutAt :: Char -> String -> [String]
-> cutAt a s = splitOn [a] s
->
-> trimSeperator :: String -> [String]
-> trimSeperator s = if not . isAlpha $ c
->                      then init s : [[c]]
->                      else [s]
->                        where c = last s
->
-> lexer' :: String -> [String]
-> lexer' = join . (map trimSeperator) . (cutAt ' ')
+< cutAt :: Char -> String -> [String]
+< cutAt a s = splitOn [a] s
+<
+< trimSeperator :: String -> [String]
+< trimSeperator s = if not . isAlpha $ c
+<                      then init s : [[c]]
+<                      else [s]
+<                        where c = last s
+<
+< lexer' :: String -> [String]
+< lexer' = join . (map trimSeperator) . (cutAt ' ')
 
 Context Free Grammar sturcture. Should contain nonterminals, terminals,
 production rules, and a start symbol.
